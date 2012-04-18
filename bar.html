@@ -8,15 +8,9 @@
 		var barWidth = 20;
 		var margin = 50;
 		var periods = 12;
-
-		//Axis Setup
-		var xaxis = new Path.Line([margin,0], [margin,maxPercent*2]);
-		xaxis.strokeColor = 'gray';
-
-		var yaxis = new Path.Line([margin,maxPercent], [(periods*barWidth)+margin,maxPercent]);
-		yaxis.strokeColor = 'gray';
-
-		function rnd_bmt() {
+        var pfunds = 20;
+        
+        function rnd_bmt() {
 			var x = 0, y = 0, rds, c;
 
 			do {
@@ -32,7 +26,23 @@
 
 			return [x*c, y*c];
 		}
+        
+        function simulateData (periods,pfunds) {
+            var pfRreturns = [];
+            for (var i = pfunds; i>= 0; i--) {
+                var returnItem = [];
+                returnItem += rnd_bmt()[0]*maxPercent/8;
+                returnItem += rnd_bmt()[1]*maxPercent/8/pfunds;
+            };
+        }
+        
 
+		//Axis Setup
+		var xaxis = new Path.Line([margin,0], [margin,maxPercent*2]);
+		xaxis.strokeColor = 'gray';
+
+		var yaxis = new Path.Line([margin,maxPercent], [(periods*barWidth)+margin,maxPercent]);
+		yaxis.strokeColor = 'gray';
 
 		function randBar (fundCount,offset) {
 			// Create a random bar for demo purposes
