@@ -4,11 +4,12 @@
 	<title>Bar</title>
 	<script type="text/javascript" src="js/paper.js"></script>
 	<script type="text/paperscript" canvas="canvas">
-		var maxPercent = 100;
-		var barWidth = 20;
+		var scale = 4;
+		var maxPercent = 50 * scale;
+		var barWidth = 10 * scale;
 		var margin = 50;
-		var periods = 12;
-        var pfunds = 20;
+		var periods = 11;
+        var holdings = 20;
         
         function rnd_bmt() {
 			var x = 0, y = 0, rds, c;
@@ -27,52 +28,80 @@
 			return [x*c, y*c];
 		}
         
-        function simulateData (periods,pfunds) {
-            var pfRreturns = [];
-            for (var i = pfunds; i>= 0; i--) {
-                var returnItem = [];
-                returnItem += rnd_bmt()[0]*maxPercent/8;
-                returnItem += rnd_bmt()[1]*maxPercent/8/pfunds;
+        function simulateData (periods,holdings) {
+            var ror = [];
+            for (var i = holdings; i>= 0; i--) {
+                ror.push(rnd_bmt()[0]/8);
             };
+            var weight = [];
+            for (var i = holdings; i>= 0; i--) {
+                weight.push(Math.abs(rnd_bmt()[0]));
+            };
+            var sum = 0;
+            for (var i = holdings; i>=0; i--) {
+            	sum += weight[i];
+            }
+            for (var i = holdings; i>=0; i--) {
+            	weight[i] = weight[i]/sum;
+            }
+            var holdingsRorArr = [];
+            for (var i = holdings; i>=0; i--) {
+            	var holdingRorObj = new Object();
+            	holdingRorObj.ror = ror[holdings-i];
+            	holdingRorObj.weight = weight[holdings-i];
+            	holdingsRorArr.push(holdingRorObj);
+            }
+            var totalReturn = 0;
+            for (var i = holdings; i>=0; i--) {
+            	totalReturn += holdingsRorArr[holdings-i].ror * holdingsRorArr[holdings-i].weight;
+            }
+
+            return [totalReturn, holdingsRorArr];
+
         }
+
         
+
 
 		//Axis Setup
 		var xaxis = new Path.Line([margin,0], [margin,maxPercent*2]);
 		xaxis.strokeColor = 'gray';
 
-		var yaxis = new Path.Line([margin,maxPercent], [(periods*barWidth)+margin,maxPercent]);
+		var yaxis = new Path.Line([margin,maxPercent], [((2+periods)*barWidth)+margin,maxPercent]);
 		yaxis.strokeColor = 'gray';
 
-		function randBar (fundCount,offset) {
-			// Create a random bar for demo purposes
+		function densityBar (offset) {
 			var marginOff = margin + offset
-			var barOpacity = 1/(1+fundCount);
-			var nrand = rnd_bmt();
-			var fofReturn = nrand[0]*maxPercent/10;
-			var fofReturnLine = new Path.Line([marginOff,maxPercent-fofReturn],[marginOff+barWidth,maxPercent-fofReturn]);
-			fofReturnLine.strokeColor = 'black';
+			var barOpacity;
+			var data = simulateData(periods,holdings);
+			var totalReturn = data[0]*100*scale;
+			var holdingsRorArr = data[1];
+			console.log(totalReturn);
+			console.log(holdingsRorArr);
 
-			for (var i = fundCount; i >= 0; i--) {
-				var pfreturn = rnd_bmt()[0]*maxPercent/8;
-				var subbar = new Path.Rectangle([marginOff,maxPercent-pfreturn],[barWidth,pfreturn-fofReturn]);
+			var totalReturnLine = new Path.Line([marginOff,maxPercent-totalReturn],[marginOff+barWidth,maxPercent-totalReturn]);
+			totalReturnLine.strokeColor = 'black';
 
-				var size = Math.abs(pfreturn-fofReturn);
+			for (var i = holdings; i >= 0; i--) {
+				var ror = holdingsRorArr[holdings-i].ror*100*scale;
+				var subbar = new Path.Rectangle([marginOff,maxPercent-ror],[barWidth,ror-totalReturn]);
 
-				subbar.fillColor = '#ff0000';
-				subbar.strokeColor = '#ff0000';
-				subbar.opacity = barOpacity;
+				var size = Math.abs(ror-totalReturn);
+
+				subbar.fillColor = 'red';
+				subbar.strokeColor = 'red';
+				subbar.opacity = holdingsRorArr[holdings-i].weight;
 			};
 
 		}
 
-		function buildSample (fundCount,periods) {
+		function buildSample (holdings,periods) {
 			for (var i = periods; i >= 0; i--) {
-				randBar(fundCount,barWidth*(periods-i));
+				densityBar(barWidth*(periods-i));
 			};
 		}
 
-		buildSample(20,periods);
+		buildSample(holdings,periods);
 
 	</script>
 </head>
